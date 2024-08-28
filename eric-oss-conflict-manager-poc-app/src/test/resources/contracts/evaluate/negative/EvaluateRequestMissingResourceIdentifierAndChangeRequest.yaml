@@ -1,0 +1,33 @@
+#
+# COPYRIGHT Ericsson 2024
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+description: |
+  Contract for evaluating change request. Missing resourceIdentifier and changeRequest fields.
+request:
+  method: POST
+  url: /v1/evaluate
+  headers:
+    Content-Type: application/json
+  body:
+    cmHandleId: "F811AF64F5146DFC545EC60B73DE948E"
+    targetFdn: "SubNetwork=Europe,SubNetwork=Ireland,SubNetwork=NETSimW,ManagedElement=LTE20dg2ERBS00011"
+
+response:
+  status: 400
+  body:
+    status: BAD_REQUEST
+    message: "Mandatory Parameter is missing"
+    details: "Mandatory Parameter changeRequest must not be null; Mandatory Parameter resourceIdentifier must not be null"

@@ -1,0 +1,9 @@
+stage-marker-init:
+  - name: custom_stages/init.Jenkinsfile
+stage-marker-test:
+  - name: custom_stages/contract.Jenkinsfile
+stage-marker-helm:
+  - name: custom_stages/helm_install.Jenkinsfile
+stage-marker-publish:
+  - name: custom_stages/publish_jars.Jenkinsfile
+  - name: custom_stages/confluence_upload_docs.Jenkinsfile

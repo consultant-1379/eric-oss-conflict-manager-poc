@@ -1,0 +1,167 @@
+#
+# COPYRIGHT Ericsson 2024
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+openapi: "3.0.2"
+
+info:
+  title: Conflict Manager Service
+  description: |
+    Conflict Manager capability for rApps using NCMP. Interface of this service is exposed for NCMP to |
+    evaluate parameter change requests for conflict.
+  contact:
+    name: Team Agora
+    url: 'https://eteamspace.internal.ericsson.com/display/IDUN/Team+Agora'
+    email: pdlteamago@pdl.internal.ericsson.com
+  license:
+    name: Ericsson Copyright License
+  version: 0.1.1
+
+tags:
+  - name: conflict-evaluation
+    description: Interface for requesting conflict evaluation for change request.
+
+servers:
+  - url: 'http://{hostname}/conflict-manager'
+    variables:
+      hostname:
+        default: eric-oss-conflict-manager
+
+paths:
+  /v1/evaluate:
+    post:
+      tags:
+        - conflict-evaluation
+      summary: Evaluation of request sent by rApps through NCMP.
+      description: |
+        Endpoint to handle change request evaluation for conflict.
+      operationId: evaluateRequest
+      requestBody:
+        description:
+          Request body sent by NCMP to evaluate change request.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvaluationRequest'
+      responses:
+        '200':
+          description: |
+            OK.
+            The change request has been evaluated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluatedResponse'
+        '400':
+          description: |
+            Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                status: BAD_REQUEST
+                message: Invalid request
+                details: "Missing required property from request: cmHandleId"
+        '500':
+          description: |
+            Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                status: INTERNAL_SERVER_ERROR
+                message: Internal server error occurred
+                details: An unexpected error occurred on the server
+        '503':
+          description: Service Unavailable
+
+components:
+  schemas:
+    EvaluationRequest:
+      type: object
+      description: The model representation of a change request.
+      properties:
+        cmHandleId:
+          type: string
+          description: The cmHandle is a unique identifier for the network element in NCMP. It’s a necessity to have this in order to push the change to the network.
+          example: F811AF64F5146DFC545EC60B73DE948E
+        resourceIdentifier:
+          type: string
+          description: Identifies the object in the node model that will be modified.
+          example: ericsson-enm-gnbdu:GNBDUFunction=1
+        targetFdn:
+          type: string
+          description: FDN of the target node.
+          example: SubNetwork=Europe,SubNetwork=Ireland,SubNetwork=NETSimW,ManagedElement=LTE20dg2ERBS00011
+        changeRequest:
+          type: object
+          description: All the information that is required to identify which parameters and attributes of the network is changing.
+          example:
+            NRCellDU:
+              - id: NRCellDU-id
+                attributes:
+                  administrativeState: UNLOCKED
+      required:
+        - cmHandleId
+        - resourceIdentifier
+        - changeRequest
+        - targetFdn
+
+    EvaluatedResponse:
+      type: object
+      description: "The change request proposal has been evaluated."
+      properties:
+        changeId:
+          type: string
+          description: A unique Id for the change so that it can be identified and tracked.
+          example: 19787929-586b-497f-89f7-998eaccf9761
+        cmHandleId:
+          type: string
+          description: The cmHandle is a unique identifier for the network element in NCMP. It’s a necessity to have this in order to push the change to the network.
+          example: F811AF64F5146DFC545EC60B73DE948E
+        decision:
+          type: enum
+          $ref: '#/components/schemas/ResponseDecisionEnum'
+          description: Outcome of the evaluation of the change request.
+          example: PERMIT
+        reason:
+          type: string
+          description: Provides the reason for the outcome of the evaluation.
+          example: No conflict identified, the change is permitted.
+
+    ErrorMessage:
+      type: object
+      title: Error
+      properties:
+        status:
+          type: string
+          $ref: '#/components/schemas/StatusError'
+        message:
+          type: string
+        details:
+          type: string
+
+    ResponseDecisionEnum:
+      type: string
+      enum: [PERMIT, DENY, PREEMPT]
+
+    StatusError:
+      type: string
+      enum: [BAD_REQUEST, INTERNAL_SERVER_ERROR]

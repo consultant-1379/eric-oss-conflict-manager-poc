@@ -1,0 +1,128 @@
+<!--~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ ~ COPYRIGHT Ericsson 2021
+ ~
+ ~
+ ~
+ ~ The copyright to the computer program(s) herein is the property of
+ ~
+ ~ Ericsson Inc. The programs may be used and/or copied only with written
+ ~
+ ~ permission from Ericsson Inc. or in accordance with the terms and
+ ~
+ ~ conditions stipulated in the agreement/contract under which the
+ ~
+ ~ program(s) have been supplied.
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~-->
+
+<!--TODO move this plugin to a more appropriate location-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.ericsson.oss.apps</groupId>
+    <artifactId>eric-oss-conflict-manager-poc</artifactId>
+    <version>1.15.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>eric-oss-conflict-manager-poc-api</artifactId>
+  <version>1.15.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <properties>
+    <openapi-files-location>${project.basedir}/src/main/resources/v1</openapi-files-location>
+  </properties>
+
+  <build>
+    <resources>
+      <resource>
+        <!-- expects the bob rule building the Conflict Manager Service from source already executed, otherwise this path does not exist -->
+        <directory>${openapi-files-location}</directory>
+      </resource>
+    </resources>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <version>2.8.2</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>3.0.0</version>
+        <executions>
+          <execution>
+            <id>enforce-files-exist</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireFilesExist>
+                  <files>
+                    <file>${openapi-files-location}</file>
+                  </files>
+                </requireFilesExist>
+              </rules>
+              <fail>true</fail>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <!--      Generate HTML documentation -->
+      <plugin>
+        <groupId>org.openapitools</groupId>
+        <artifactId>openapi-generator-maven-plugin</artifactId>
+        <version>${version.openapi-generator-maven-plugin}</version>
+        <executions>
+          <execution>
+            <id>conflict-manager-html-gen</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${openapi-files-location}/eric-oss-conflict-manager-poc-openapi.yaml</inputSpec>
+              <generatorName>html</generatorName>
+              <output>target/generated-sources/src/main/resources/v1</output>
+              <configOptions>
+                <oas3>true</oas3>
+              </configOptions>
+            </configuration>
+          </execution>
+          <!--      Generate models and interface -->
+          <execution>
+            <id>conflict-manager-code-gen</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${openapi-files-location}/eric-oss-conflict-manager-poc-openapi.yaml</inputSpec>
+              <generatorName>spring</generatorName>
+              <modelNamePrefix>conflict-manager</modelNamePrefix>
+              <configOptions>
+                <oas3>true</oas3>
+                <generateSupportingFiles>true</generateSupportingFiles>
+                <sourceFolder>src/main/java</sourceFolder>
+                <dateLibrary>java11</dateLibrary>
+                <library>spring-boot</library>
+                <interfaceOnly>true</interfaceOnly>
+                <skipOverwrite>false</skipOverwrite>
+                <useTags>true</useTags>
+                <serializableModel>true</serializableModel>
+                <useBeanValidation>true</useBeanValidation>
+                <useSpringBoot3>true</useSpringBoot3>
+                <useJakartaEe>true</useJakartaEe>
+              </configOptions>
+              <apiPackage>com.ericsson.oss.apps.api</apiPackage>
+              <modelPackage>com.ericsson.oss.apps.api.model</modelPackage>
+              <globalProperties>
+                <enablePostProcessFile>true</enablePostProcessFile>
+              </globalProperties>
+              <groupId>${project.groupId}</groupId>
+              <artifactId>${project.artifactId}</artifactId>
+              <artifactVersion>${project.version}</artifactVersion>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

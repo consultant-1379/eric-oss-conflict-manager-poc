@@ -1,0 +1,7 @@
+= Conflict Manager Architecture
+
+include::../_fragments/_wiki-header.adoc[]
+
+== Overview
+
+Initial commit.

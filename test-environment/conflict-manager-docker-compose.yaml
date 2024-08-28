@@ -1,0 +1,71 @@
+#
+# COPYRIGHT Ericsson 2024
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+#
+# Docker Compose file for Conflict Manager and dependencies
+#
+
+version: '3.1'
+
+services:
+
+  eric-oss-conflict-manager-database-pg:
+    container_name: eric-oss-conflict-manager-database-pg
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: conflict_manager_db
+    ports:
+      - 5432:5432
+    networks:
+      - cmNetwork
+
+  eric-oss-conflict-manager-service:
+    container_name: eric-oss-conflict-manager
+    image: armdocker.rnd.ericsson.se/proj-eric-oss-drop/eric-oss-conflict-manager-poc:1.12.0-3
+    environment:
+      CONFLICT_DB_JDBC_CONNECTION: jdbc:postgresql://eric-oss-conflict-manager-database-pg:5432/conflict_manager_db
+    depends_on:
+      - eric-oss-conflict-manager-database-pg
+    ports:
+      - 8080:8080
+    networks:
+      - cmNetwork
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:v2.36.2
+    user: "root:root"
+    volumes:
+      - ./config:/prometheus
+      - ./prometheus_data/:/data/prometheus
+    command:
+      - '--config.file=/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/data/prometheus'
+    ports:
+      - 9090:9090
+    depends_on:
+      - eric-oss-conflict-manager-service
+    networks:
+      - cmNetwork
+
+# docker network create --driver=bridge --subnet=100.109.1.0/24 br0
+networks:
+  cmNetwork:
+    external:
+      name: br0
